@@ -2,21 +2,21 @@
 <html lang="ko"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="light">
 <title>야구선수 첫인상 표</title>
 <style>
-:root{--bg:#171826;--card:color-mix(in srgb,var(--bg) 82%,#fff);--ink:#fff;--sub:#9aa0b8;--accent:#e5534b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--bg:#fadce7;--card:#fff;--ink:#2b2b3a;--sub:#7a7a8c;--accent:#e5649a;--line:color-mix(in srgb,var(--accent) 28%,#fff);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif}
 .wrap{max-width:760px;margin:0 auto;padding:20px 14px 80px}
 .head{text-align:center;margin-bottom:16px}
-.head h1{margin:0;font-size:28px;font-weight:600}
-.head .s{color:#d8dbe8;font-size:18px;margin-top:2px}
+.head h1{margin:0;font-size:28px;font-weight:700;color:var(--accent)}
+.head .s{color:var(--sub);font-size:18px;margin-top:2px}
 .hint{text-align:center;color:var(--sub);font-size:13px;margin:0 0 16px}
 .bar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:18px}
-button{font:inherit;font-size:14px;font-weight:600;padding:9px 14px;border-radius:10px;border:1px solid #3a4058;background:var(--card);color:var(--ink);cursor:pointer}
-button.primary{background:var(--accent);border-color:var(--accent)}
+button{font:inherit;font-size:14px;font-weight:600;padding:9px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 button:active{transform:scale(.97)}
 .back{margin-bottom:6px;padding:6px 10px;font-size:13px}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
@@ -26,10 +26,10 @@ button:active{transform:scale(.97)}
 .r,.hd{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .hd div{text-align:center;font-size:20px;font-weight:600}
 .cell{position:relative;min-width:0}
-.photo{display:block;width:100%;aspect-ratio:10/11;padding:0;border-radius:6px;background:var(--card);border:1px dashed #3a4058;color:var(--sub);font-size:12px;overflow:hidden;cursor:default}
+.photo{display:block;width:100%;aspect-ratio:10/11;padding:0;border-radius:12px;background:var(--card);border:1px dashed var(--line);color:var(--sub);font-size:12px;overflow:hidden;cursor:default}
 .photo.edit{cursor:pointer}
 .photo img{width:100%;height:100%;object-fit:cover;display:block}
-.box{background:#fff;color:#111;border-radius:2px;margin-top:4px;padding:4px 6px}
+.box{background:#fff;color:#2b2b3a;border-radius:10px;margin-top:6px;padding:6px 8px;border:1px solid var(--line)}
 .box input,.box textarea,.box .nm{display:block;width:100%;border:0;background:transparent;color:#111;font:inherit;font-size:14px;padding:2px 0}
 .box input,.box .nm{font-weight:700}
 .box .nm,.box textarea+*{border-bottom:0}
@@ -40,10 +40,10 @@ button:active{transform:scale(.97)}
 .res{font-size:13px;font-weight:700;padding:2px 0}
 .ok{color:#1a8f4a}.no{color:#c8312b}
 .nm2{text-align:center;font-size:13px;margin-top:3px}
-.del{position:absolute;top:6px;right:6px;width:26px;height:26px;padding:0;border-radius:50%;background:rgba(0,0,0,.55);border:0;font-size:12px;line-height:1}
-.empty{grid-column:1/-1;text-align:center;color:var(--sub);padding:48px 12px;border:1px dashed #3a4058;border-radius:12px}
+.del{position:absolute;top:6px;right:6px;width:26px;height:26px;padding:0;border-radius:50%;background:rgba(0,0,0,.55);border:0;font-size:12px;line-height:1;color:#fff}
+.empty{grid-column:1/-1;text-align:center;color:var(--sub);padding:48px 12px;border:1px dashed var(--line);border-radius:12px}
 .status{text-align:center;font-size:12px;color:var(--sub);margin-top:14px;min-height:18px}
-.owner{border:1px solid #3a4058;border-radius:12px;padding:12px;margin-bottom:18px}
+.owner{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:18px}
 .owner .ot{font-size:13px;color:var(--sub);text-align:center;margin:0 0 10px}
 @media (max-width:520px){.grid{grid-template-columns:repeat(2,1fr)}.head h1{font-size:22px}}
 </style>
@@ -69,7 +69,7 @@ button:active{transform:scale(.97)}
   var NKEY='bi-notes-v3',DKEY='bi-draft-v2';
   var $=function(i){return document.getElementById(i)};
   var TITLE='야구선수 첫인상 표',st=$('status');
-  var TEAMS=[['doosan','두산 베어스','#e5333b','#14152f'],['lg','LG 트윈스','#d4145a','#24101c'],['kia','KIA 타이거즈','#ea0029','#1a1013'],['samsung','삼성 라이온즈','#2f7de1','#0a1a3a'],['lotte','롯데 자이언츠','#e0183b','#0f1a33'],['ssg','SSG 랜더스','#ce0e2d','#221116'],['nc','NC 다이노스','#d6a84a','#13223f'],['kt','KT 위즈','#eb1c24','#141414'],['hanwha','한화 이글스','#ff6a13','#2a1608'],['kiwoom','키움 히어로즈','#c4223f','#2c0a10']];
+  var TEAMS=[['doosan','두산 베어스','#1d2a6b','#e6e8f6'],['lg','LG 트윈스','#c30452','#fbe1ec'],['kia','KIA 타이거즈','#ea0029','#fde1e4'],['samsung','삼성 라이온즈','#0a58c2','#dfeafb'],['lotte','롯데 자이언츠','#d00f31','#e1e7f3'],['ssg','SSG 랜더스','#ce0e2d','#fff1d6'],['nc','NC 다이노스','#315288','#e6ecf6'],['kt','KT 위즈','#eb1c24','#eeeeee'],['hanwha','한화 이글스','#f26a1b','#ffe9d9'],['kiwoom','키움 히어로즈','#8e1235','#f6e1e6']];
   function team(k){return TEAMS.filter(function(x){return x[0]===k})[0]}
   function applyTheme(){var t=team(cur),s=document.documentElement.style;if(t){s.setProperty('--bg',t[3]);s.setProperty('--accent',t[2])}else{s.removeProperty('--bg');s.removeProperty('--accent')}}
   var MODES=[['guess','이름 맞추기','사진만 보고 이름을 맞혀요'],['first','첫인상표','첫인상을 글로 적어요'],['now','현인상표','지금 인상을 글로 적어요'],['both','첫-현인상표','첫인상·현인상 이미지를 나란히 올려요']];
@@ -258,20 +258,20 @@ button:active{transform:scale(.97)}
     var total=headH+RH.reduce(function(a,b){return a+b+gap+16},0)+m;
     c.width=W;c.height=Math.max(1920,total);ctx=c.getContext('2d');
     var T=team(cur);ctx.fillStyle=T[3];ctx.fillRect(0,0,W,c.height);
-    ctx.fillStyle='#101119';ctx.fillRect(0,0,W,150);ctx.fillStyle=T[2];ctx.fillRect(0,150,W,10);
+    ctx.fillStyle=T[2];ctx.fillRect(0,150,W,10);
     ctx.textAlign='center';ctx.textBaseline='alphabetic';
-    ctx.fillStyle='#fff';ctx.font='500 64px '+font;ctx.fillText(TITLE,W/2,100);
-    ctx.fillStyle='#d8dbe8';ctx.font='500 38px '+font;ctx.fillText(tn(cur)+' · '+mn(mode),W/2,142);
-    function draw(img,x,y){ctx.fillStyle='#252a3c';ctx.beginPath();ctx.roundRect(x,y,cw,ph,10);ctx.fill();
+    ctx.fillStyle=T[2];ctx.font='700 64px '+font;ctx.fillText(TITLE,W/2,100);
+    ctx.fillStyle='#5b5b6d';ctx.font='500 38px '+font;ctx.fillText(tn(cur)+' · '+mn(mode),W/2,142);
+    function draw(img,x,y){ctx.fillStyle='#ffffff';ctx.beginPath();ctx.roundRect(x,y,cw,ph,10);ctx.fill();
       if(img){ctx.save();ctx.beginPath();ctx.roundRect(x,y,cw,ph,10);ctx.clip();ctx.drawImage(img,x,y,cw,ph);ctx.restore()}}
-    if(both){ctx.fillStyle='#fff';ctx.font='600 44px '+font;ctx.fillText('첫인상',m+cw+gap+cw/2,headH-34);ctx.fillText('현인상',m+2*(cw+gap)+cw/2,headH-34)}
+    if(both){ctx.fillStyle=T[2];ctx.font='700 44px '+font;ctx.fillText('첫인상',m+cw+gap+cw/2,headH-34);ctx.fillText('현인상',m+2*(cw+gap)+cw/2,headH-34)}
     var y=headH;
     for(r=0;r<nrows;r++){
       for(k=0;k<cols;k++){
         var ix=r*cols+k;if(!rows[ix])continue;
         if(both){
           for(var j=0;j<3;j++){var x0=m+j*(cw+gap);draw(imgs[ix][j],x0,y);
-            ctx.fillStyle='#fff';ctx.font='24px '+font;ctx.textAlign='center';
+            ctx.fillStyle='#2b2b3a';ctx.font='24px '+font;ctx.textAlign='center';
             CL[ix][j].forEach(function(l,q){ctx.fillText(l,x0+cw/2,y+ph+28+q*lh)})}
         }else{
           var x=m+k*(cw+gap);draw(imgs[ix][0],x,y);
