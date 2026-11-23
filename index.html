@@ -94,6 +94,7 @@ button:active{transform:scale(.97)}
   function bv(id){var v=nv(id);return v&&typeof v==='object'?v:{}}
   function sb(id,k,v){var o=bv(id);o[k]=v;sv(id,o)}
   function norm(s){return String(s||'').replace(/\s+/g,'').toLowerCase()}
+  function hasInput(r){if(mode==='both'){var b=bv(r.id);return !!(b.a||b.b||String(b.ca||'').trim()||String(b.cb||'').trim())}return !!String(nv(r.id)||'').trim()}
   function isOk(r){return !!r.name&&norm(nv(r.id))===norm(r.name)}
 
   function resize(file){
@@ -184,14 +185,14 @@ button:active{transform:scale(.97)}
     }
     renderOwner();act.style.display='';
     $('check').style.display=mode==='guess'?'':'none';$('check').textContent=shown?'다시 풀기':'정답 확인';
-    hint.textContent=HINTS[mode]+' 적은 내용은 내 기기에만 저장돼요.';
+    hint.textContent=HINTS[mode]+' 적은 선수만 저장 이미지에 들어가요. 내용은 내 기기에만 저장돼요.';
     var rows=curRows();hint.style.display=rows.length?'':'none';
     if(!rows.length){list.className='grid';var e=el('div','empty',owner?'「사진 올리기」로 선수 사진을 먼저 올려주세요!':'아직 사진이 올라오지 않았어요. 조금만 기다려 주세요!');list.appendChild(e);return}
     if(mode==='both'){
       var hd=el('div','hd');hd.appendChild(el('div'));hd.appendChild(el('div','','첫인상'));hd.appendChild(el('div','','현인상'));list.appendChild(hd);
       rows.forEach(function(r,i){
         var row=el('div','r'),c0=photoCell(r,i);
-        if(owner){var bx=el('div','box');bx.appendChild(ownerName(r));c0.appendChild(bx)}else if(r.name)c0.appendChild(el('div','nm2',r.name));
+        if(owner){var bx=el('div','box');bx.appendChild(ownerName(r));c0.appendChild(bx)}
         row.appendChild(c0);row.appendChild(slot(r,'a','ca'));row.appendChild(slot(r,'b','cb'));list.appendChild(row);
       });
       return;
@@ -236,7 +237,7 @@ button:active{transform:scale(.97)}
   function li(src){return new Promise(function(res){if(!src)return res(null);var i=new Image();i.onload=function(){res(i)};i.onerror=function(){res(null)};i.src=src})}
 
   async function exportPng(){
-    var rows=curRows(),both=mode==='both',W=1080,m=40,gap=both?16:24,cw=Math.floor((W-m*2-gap*2)/3),ph=Math.round(cw*1.1);
+    var rows=curRows().filter(hasInput),both=mode==='both',W=1080,m=40,gap=both?16:24,cw=Math.floor((W-m*2-gap*2)/3),ph=Math.round(cw*1.1);
     var font='"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif',lh=30,pad=14,headH=both?270:210;
     var c=document.createElement('canvas'),ctx=c.getContext('2d');ctx.font='24px '+font;
     var imgs=[],CL=[],RH=[],cols=both?1:3,nrows=Math.ceil(rows.length/cols),i,k,r;
@@ -245,7 +246,7 @@ button:active{transform:scale(.97)}
       var mx=0,ex=0;
       for(k=0;k<cols;k++){
         var idx=r*cols+k,it=rows[idx];if(!it)continue;
-        if(both){var bb=bv(it.id);var cp=[it.name||'',bb.ca||'',bb.cb||''].map(function(t){return t?wrap(ctx,t,cw):[]});CL[idx]=cp;cp.forEach(function(a){ex=Math.max(ex,a.length)})}
+        if(both){var bb=bv(it.id);var cp=['',bb.ca||'',bb.cb||''].map(function(t){return t?wrap(ctx,t,cw):[]});CL[idx]=cp;cp.forEach(function(a){ex=Math.max(ex,a.length)})}
         else{
           var o=[],v=nv(it.id)||'';
           if(mode==='guess'){o.push({t:v||'(미입력)',b:1});if(shown){var ok=isOk(it);o.push({t:ok?'정답!':(it.name?'정답: '+it.name:'정답 미등록'),c:ok?'#1a8f4a':'#c8312b',b:1})}}
@@ -285,7 +286,7 @@ button:active{transform:scale(.97)}
   }
 
   $('save').onclick=async function(){
-    if(!curRows().length){st.textContent='저장할 사진이 아직 없어요.';return}
+    if(!curRows().filter(hasInput).length){st.textContent='입력한 선수가 아직 없어요. 하나 이상 적어주세요.';return}
     st.textContent='이미지를 만드는 중…';
     try{
       var blob=await exportPng();await saveFile(TITLE+' - '+tn(cur)+' '+mn(mode)+'.png',blob);
