@@ -200,7 +200,7 @@ button:active{transform:scale(.97)}
     list.className='grid';
     rows.forEach(function(r,i){
       var cell=photoCell(r,i),box=el('div','box');
-      if(owner)box.appendChild(ownerName(r));else if(mode!=='guess'&&r.name)box.appendChild(el('div','nm',r.name));
+      if(owner)box.appendChild(ownerName(r));
       if(mode==='guess'){
         var t=el('input');t.type='text';t.placeholder='이름은?';t.value=nv(r.id)||'';t.oninput=function(){sv(r.id,t.value)};box.appendChild(t);
         if(r.name)tot++;
@@ -250,7 +250,7 @@ button:active{transform:scale(.97)}
         else{
           var o=[],v=nv(it.id)||'';
           if(mode==='guess'){o.push({t:v||'(미입력)',b:1});if(shown){var ok=isOk(it);o.push({t:ok?'정답!':(it.name?'정답: '+it.name:'정답 미등록'),c:ok?'#1a8f4a':'#c8312b',b:1})}}
-          else{if(it.name)o.push({t:it.name,b:1});wrap(ctx,v,cw-pad*2).forEach(function(l){o.push({t:l})})}
+          else{wrap(ctx,v,cw-pad*2).forEach(function(l){o.push({t:l})})}
           CL[idx]=o;mx=Math.max(mx,pad*2+Math.max(2,o.length)*lh);
         }
       }
