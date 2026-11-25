@@ -36,11 +36,14 @@ button:active{transform:scale(.97)}
 .box textarea{resize:none;min-height:84px}
 .box input:focus,.box textarea:focus{outline:none}
 .box ::placeholder{color:#aaa;font-weight:400}
+.box input.gs{text-align:center;font-size:18px}.box input.rs{text-align:center;font-weight:500;font-size:15px;color:#555}
+.card{border:3px solid var(--line2);border-radius:18px;overflow:hidden;background:#fff}.card .photo{border:0;border-radius:0;background:var(--card)}.card .box{margin-top:0;border:0;border-top:3px solid var(--line2);border-radius:0}
 .cap input{font-weight:400;font-size:15px}
 .res{font-size:15px;font-weight:700;padding:2px 0}
 .ok{color:#1a8f4a}.no{color:#c8312b}
 .nm2{text-align:center;font-size:13px;margin-top:3px}
 .del{position:absolute;top:6px;right:6px;width:26px;height:26px;padding:0;border-radius:50%;background:rgba(0,0,0,.55);border:0;font-size:12px;line-height:1;color:#fff}
+.req{margin-top:22px;padding:14px;border:3px solid var(--line2);border-radius:16px;background:#fff;text-align:center}.rqh{font-weight:700;font-size:16px}.rqs{font-size:13px;color:var(--sub);margin:4px 0 10px}.req input{width:100%;font:inherit;font-size:16px;padding:8px 10px;border:2px solid var(--line);border-radius:10px;margin-bottom:10px}
 .tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;justify-content:center}.tab{padding:7px 12px;font-size:14px;border-radius:999px}.tab.on{background:var(--tc);border-color:var(--tc);color:#fff}
 .pk{cursor:pointer}.pk.on{outline:5px solid var(--accent);outline-offset:-5px}.chk{position:absolute;top:8px;left:8px;z-index:2;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;pointer-events:none}
 .sbar{position:sticky;bottom:0;display:flex;gap:8px;justify-content:center;padding:12px 0;background:var(--bg);margin-top:14px}button:disabled{opacity:.5;cursor:default}
@@ -63,6 +66,7 @@ button:active{transform:scale(.97)}
     <button id="clearNotes">내 글 지우기</button>
     <button id="rand">🎲 랜덤 9명</button>
     <button id="allBtn" style="display:none">전체 보기</button>
+    <button id="submitBtn" class="primary" style="display:none">📮 제출하기</button>
   </div>
   <div id="list"></div>
   <div class="status" id="status"></div>
@@ -84,7 +88,7 @@ button:active{transform:scale(.97)}
   function nm(L,k){for(var i=0;i<L.length;i++)if(L[i][0]===k)return L[i][1];return ''}
   var tn=function(k){return nm(TEAMS,k)},mn=function(k){return nm(MODES,k)};
   var seed={teams:{}};try{seed=JSON.parse($('seed').textContent)||seed}catch(e){}
-  var data=JSON.parse(JSON.stringify(seed)),notes={},owner=false,artifact=null,mode='',cur='',shown=false,sub=null,mix=null,pickScr=false,chosen=[],pt='';
+  var data=JSON.parse(JSON.stringify(seed)),notes={},owner=false,artifact=null,mode='',cur='',shown=false,sub=null,mix=null,pickScr=false,chosen=[],pt='',reqText='';
   try{notes=JSON.parse(localStorage.getItem(NKEY)||'{}')||{}}catch(e){}
   try{chosen=JSON.parse(localStorage.getItem('bi-chosen-v1')||'[]')||[]}catch(e){}
 
@@ -106,6 +110,39 @@ button:active{transform:scale(.97)}
   function allRows(keys){var o=[];(keys||TEAMS.map(function(x){return x[0]})).forEach(function(k){var tt=data.teams&&data.teams[k];if(tt&&tt.rows)o=o.concat(tt.rows)});return o}
   function sl(){return cur?tn(cur):mix?(mix.type==='random'?'여러 구단 랜덤':teamsLabel()):''}
   function teamsLabel(){var ks=[];TEAMS.forEach(function(x){var tt=data.teams&&data.teams[x[0]];if(tt&&tt.rows.some(function(r){return chosen.indexOf(r.id)>=0}))ks.push(x[0])});return ks.length>3?'여러 구단 선택':ks.map(tn).join(' · ')}
+  function parseForm(link){try{
+    var u=new URL(String(link||'').trim());if(u.hostname!=='docs.google.com')return null;
+    var action=u.origin+u.pathname.replace(/\/viewform.*$/,'/formResponse');if(!/\/formResponse$/.test(action))return null;
+    var ent={};u.searchParams.forEach(function(v,k){if(/^entry\.\d+$/.test(k))ent[v.trim()]=k});
+    return ent.content?{action:action,ent:ent}:null}catch(e){return null}}
+  function formCfg(){return parseForm(data.formLink)}
+  async function postForm(v){var cfg=formCfg();if(!cfg)return false;var b=new URLSearchParams();
+    ['nickname','mode','team','player','content'].forEach(function(k){if(cfg.ent[k]&&v[k]!=null)b.set(cfg.ent[k],String(v[k]))});
+    try{await fetch(cfg.action,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:b.toString()});return true}catch(e){return false}}
+  function teamNameOfRow(id){for(var i=0;i<TEAMS.length;i++){var tt=data.teams&&data.teams[TEAMS[i][0]];if(tt&&tt.rows.some(function(r){return r.id===id}))return TEAMS[i][1]}return ''}
+  function contentOf(r){
+    if(mode==='both'){var b=bv(r.id);return '첫인상: '+(b.ca||(b.a?'(이미지)':''))+' | 현인상: '+(b.cb||(b.b?'(이미지)':''))}
+    if(mode==='guess'){var q=gv(r.id);return String(q.g||'').trim()+(r.name?' ('+(isOk(r)?'정답':'오답')+')':'')+(String(q.r||'').trim()?' | 추가 입력 사항: '+String(q.r).trim():'')}
+    return String(nv(r.id)||'').trim()}
+  async function submitAll(){
+    var rows=visRows().filter(hasInput);if(!rows.length){st.textContent='제출할 내용이 아직 없어요.';return}
+    var nick='';
+    var sent={};try{sent=JSON.parse(localStorage.getItem('bi-sent-v1')||'{}')||{}}catch(e){}
+    var n=0,skip=0;
+    for(var i=0;i<rows.length;i++){
+      var r=rows[i],c=contentOf(r),key=mode+':'+r.id;
+      if(sent[key]===c){skip++;continue}
+      st.textContent='제출하는 중… '+(i+1)+' / '+rows.length;
+      if(await postForm({nickname:nick,mode:mn(mode),team:teamNameOfRow(r.id),player:r.name||'',content:c})){sent[key]=c;n++}
+      await new Promise(function(res){setTimeout(res,250)});
+    }
+    try{localStorage.setItem('bi-sent-v1',JSON.stringify(sent))}catch(e){}
+    st.textContent=n+'명 제출했어요!'+(skip?' ('+skip+'명은 이미 제출한 내용이라 건너뛰었어요)':'');
+  }
+  function copyText(s){return new Promise(function(res){
+    function fb(){var a=document.createElement('textarea');a.value=s;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();var ok=false;try{ok=document.execCommand('copy')}catch(e){}a.remove();return ok}
+    try{if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(s).then(function(){res(true)},function(){res(fb())});return}}catch(e){}
+    res(fb())})}
   function saveChosen(){try{localStorage.setItem('bi-chosen-v1',JSON.stringify(chosen))}catch(e){}}
   function renderPicker(list,hint){
     list.className='';
@@ -129,6 +166,15 @@ button:active{transform:scale(.97)}
       c.appendChild(b);if(r.name)c.appendChild(el('div','nm2',r.name));g.appendChild(c);
     });
     list.appendChild(g);
+    var hasU=!!formCfg(),rq=el('div','req');
+    rq.appendChild(el('div','rqh','🙋 찾는 선수가 없나요?'));rq.appendChild(el('div','rqs','추가됐으면 하는 선수를 알려주세요.'));
+    var ti=el('input');ti.type='text';ti.placeholder='선수 이름 / 구단 (예: 홍길동 / 두산)';ti.value=reqText;ti.oninput=function(){reqText=ti.value};rq.appendChild(ti);
+    var rb2=el('button','',hasU?'요청 보내기':'요청 복사하기');
+    rb2.onclick=async function(){
+      var q=reqText.trim();if(!q){st.textContent='추가를 요청할 선수 이름을 적어주세요.';return}
+      if(hasU){await postForm({nickname:'',mode:'선수 추가 요청',team:'',player:'',content:q});reqText='';render();st.textContent='요청을 보냈어요!';return}
+      var ok=await copyText('[선수 추가 요청] '+q);st.textContent=(ok?'요청 내용을 복사했어요. ':'')+'만든 사람에게 보내주세요.';
+    };rq.appendChild(rb2);list.appendChild(rq);
     var bar=el('div','sbar'),go1=el('button','primary',chosen.length?'✅ 선택한 '+chosen.length+'명으로 시작':'선수를 골라주세요');
     go1.disabled=!chosen.length;go1.onclick=function(){go(mode+'-mine')};
     var cl=el('button','','비우기');cl.onclick=function(){chosen=[];saveChosen();render()};
@@ -145,8 +191,10 @@ button:active{transform:scale(.97)}
   function bv(id){var v=nv(id);return v&&typeof v==='object'?v:{}}
   function sb(id,k,v){var o=bv(id);o[k]=v;sv(id,o)}
   function norm(s){return String(s||'').normalize('NFC').replace(/[\s\u200b-\u200f\ufeff]+/g,'').toLowerCase()}
-  function hasInput(r){if(mode==='both'){var b=bv(r.id);return !!(b.a||b.b||String(b.ca||'').trim()||String(b.cb||'').trim())}return !!String(nv(r.id)||'').trim()}
-  function isOk(r){return !!r.name&&norm(nv(r.id))===norm(r.name)}
+  function hasInput(r){if(mode==='both'){var b=bv(r.id);return !!(b.a||b.b||String(b.ca||'').trim()||String(b.cb||'').trim())}if(mode==='guess'){var q=gv(r.id);return !!(String(q.g||'').trim()||String(q.r||'').trim())}return !!String(nv(r.id)||'').trim()}
+  function gv(id){var v=nv(id);return typeof v==='string'?{g:v,r:''}:(v&&typeof v==='object'?v:{})}
+  function sg(id,k,val){var o=gv(id);o[k]=val;sv(id,o)}
+  function isOk(r){return !!r.name&&norm(gv(r.id).g)===norm(r.name)}
 
   function resize(file){
     return new Promise(function(res,rej){
@@ -198,13 +246,24 @@ button:active{transform:scale(.97)}
     mk('📷 사진 올리기 (여러 장)','',function(){pick(function(d,n){curRows().push({id:uid(),photo:d,name:nameOf(n)})},true)});
     mk('📁 폴더째로 한 번에 올리기','',folderUpload);
     mk('＋ 빈 칸','',function(){curRows().push({id:uid(),photo:'',name:''});saveDraft();render()});
+    mk('🗑 이 구단 전체 삭제','',function(){var n=curRows().length;if(!n)return;if(confirm('이 구단의 선수 '+n+'명을 모두 삭제할까요?')){data.teams[cur].rows=[];saveDraft();render()}});
+    mk('🗑 모든 구단 전체 삭제','',function(){var n=allRows().length;if(!n)return;if(confirm('모든 구단의 선수 '+n+'명을 삭제할까요?')&&confirm('정말 전부 삭제할까요? 사진이 모두 사라져요.')){data.teams={};saveDraft();render()}});
     mk('📤 입력용 HTML 만들기','primary',exportViewer);
     mk('되돌리기','',function(){if(confirm('마지막으로 반영한 상태로 되돌릴까요?')){data=JSON.parse(JSON.stringify(seed));try{localStorage.removeItem(DKEY)}catch(e){}render()}});
+    var ri=el('input');ri.type='text';ri.placeholder='구글폼 미리 채워진 링크 (사람들 입력 수집용, 선택)';ri.value=data.formLink||'';
+    ri.style.cssText='width:100%;margin-top:10px;padding:8px 10px;border:2px solid var(--line2);border-radius:10px;font:inherit;font-size:14px';
+    var rs=el('div','ot');rs.style.marginTop='6px';
+    function chk(){var v=ri.value.trim(),c=parseForm(v);
+      if(!v){rs.textContent='';return}
+      if(c){rs.textContent='✅ 구글폼 연결됨 (인식한 칸 '+Object.keys(c.ent).length+'개)';return}
+      var u=null;try{u=new URL(v)}catch(e){}
+      rs.textContent=u&&u.hostname==='docs.google.com'&&!/entry\.\d+=/.test(u.search)?'❌ 일반 폼 링크예요. 폼의 ⋮ 메뉴 → 미리 채워진 링크 가져오기로 받은 링크가 필요해요.':'❌ 링크를 인식하지 못했어요. 미리 채워진 링크가 맞는지 확인해 주세요.'}
+    ri.oninput=function(){data.formLink=ri.value.trim();saveDraft();chk()};chk();w.appendChild(ri);w.appendChild(rs);
     b.appendChild(w);
   }
 
   function photoCell(r,i){
-    var cell=el('div','cell'),ph=el('button','photo'+(isEd()?' edit':''));ph.type='button';
+    var cell=el('div','cell card'),ph=el('button','photo'+(isEd()?' edit':''));ph.type='button';
     if(r.photo){var im=el('img');im.src=r.photo;im.alt='선수 사진';ph.appendChild(im)}else ph.textContent=isEd()?'사진 추가':'';
     if(isEd()){ph.onclick=function(){pick(function(d){r.photo=d;saveDraft();render()})};
       var d=el('button','del','✕');d.title='삭제';d.onclick=function(){var k=curRows().indexOf(r);if(k>=0)curRows().splice(k,1);saveDraft();render()};cell.appendChild(ph);cell.appendChild(d)}
@@ -214,7 +273,7 @@ button:active{transform:scale(.97)}
   function ownerName(r){var n=el('input');n.type='text';n.placeholder=mode==='guess'?'정답 이름':'이름 (선택)';n.value=r.name||'';n.oninput=function(){r.name=n.value;saveDraft()};return n}
 
   function slot(r,k,ck){
-    var c=el('div','cell'),b=el('button','photo edit'),u=bv(r.id)[k];b.type='button';
+    var c=el('div','cell card'),b=el('button','photo edit'),u=bv(r.id)[k];b.type='button';
     if(u){var im=el('img');im.src=u;b.appendChild(im)}else b.textContent='+ 이미지';
     b.onclick=function(){pick(function(d){sb(r.id,k,d);render()})};c.appendChild(b);
     if(u){var x=el('button','del','✕');x.onclick=function(){sb(r.id,k,'');render()};c.appendChild(x)}
@@ -247,9 +306,10 @@ button:active{transform:scale(.97)}
     if(mix&&mix.type==='random'&&!sub)roll();
     if(cur)renderOwner();act.style.display='';
     $('check').style.display=mode==='guess'?'':'none';$('check').textContent=shown?'다시 풀기':'정답 확인';
-    hint.textContent=HINTS[mode]+' 적은 선수만 저장 이미지에 들어가요. 내용은 내 기기에만 저장돼요.';
+    hint.textContent=HINTS[mode]+' 적은 선수만 저장 이미지에 들어가요. '+(formCfg()?'제출하기를 누르기 전까지는 내 기기에만 저장돼요.':'내용은 내 기기에만 저장돼요.');
     var rows=visRows();if(sub)hint.textContent='🎲 랜덤 '+rows.length+'명만 보여요. '+hint.textContent;hint.style.display=rows.length?'':'none';
     $('allBtn').style.display=sub&&!(mix&&mix.type==='random')?'':'none';
+    $('submitBtn').style.display=formCfg()?'':'none';
     if(!rows.length){list.className='grid';var e=el('div','empty',isEd()?'「사진 올리기」로 선수 사진을 먼저 올려주세요!':'아직 사진이 올라오지 않았어요. 조금만 기다려 주세요!');list.appendChild(e);return}
     if(mode==='both'){
       var hd=el('div','hd');hd.appendChild(el('div'));hd.appendChild(el('div','','첫인상'));hd.appendChild(el('div','','현인상'));list.appendChild(hd);
@@ -265,7 +325,8 @@ button:active{transform:scale(.97)}
       var cell=photoCell(r,i),box=el('div','box');
       if(isEd())box.appendChild(ownerName(r));
       if(mode==='guess'){
-        var t=el('input');t.type='text';t.placeholder='이름은?';t.value=nv(r.id)||'';t.oninput=function(){sv(r.id,t.value)};box.appendChild(t);
+        var t=el('input','gs');t.type='text';t.placeholder='이름은?';t.value=gv(r.id).g||'';t.oninput=function(){sg(r.id,'g',t.value)};box.appendChild(t);
+        var ri2=el('input','rs');ri2.type='text';ri2.placeholder='추가 입력 사항';ri2.value=gv(r.id).r||'';ri2.oninput=function(){sg(r.id,'r',ri2.value)};box.appendChild(ri2);
         if(r.name)tot++;
         if(shown){var ok=isOk(r);if(ok)sc++;box.appendChild(el('div','res '+(ok?'ok':'no'),ok?'✅ 정답!':(r.name?'❌ 정답: '+r.name:'정답 미등록')))}
       }else{
@@ -309,15 +370,19 @@ button:active{transform:scale(.97)}
       var mx=0,ex=0;
       for(k=0;k<cols;k++){
         var idx=r*cols+k,it=rows[idx];if(!it)continue;
-        if(both){var bb=bv(it.id);var cp=['',bb.ca||'',bb.cb||''].map(function(t){return t?wrap(ctx,t,cw):[]});CL[idx]=cp;cp.forEach(function(a){ex=Math.max(ex,a.length)})}
+        if(both){var bb=bv(it.id);var cp=['',bb.ca||'',bb.cb||''].map(function(t){return t?wrap(ctx,t,cw-pad*2):[]});CL[idx]=cp;cp.forEach(function(a){ex=Math.max(ex,a.length)})}
         else{
           var o=[],v=nv(it.id)||'';
-          if(mode==='guess'){o.push({t:v||'(미입력)',b:1});if(shown){var ok=isOk(it);o.push({t:ok?'정답!':(it.name?'정답: '+it.name:'정답 미등록'),c:ok?'#1a8f4a':'#c8312b',b:1})}}
+          if(mode==='guess'){var q=gv(it.id);
+            ctx.font='700 40px '+font;wrap(ctx,String(q.g||'').trim()||'(미입력)',cw-pad*2).forEach(function(l){o.push({t:l,b:1,s:40,h:52})});
+            if(String(q.r||'').trim()){ctx.font='700 28px '+font;wrap(ctx,String(q.r).trim(),cw-pad*2).forEach(function(l){o.push({t:l,b:1,s:28,h:38,c:'#4a4a5a'})})}
+            ctx.font='30px '+font;
+            if(shown){var ok=isOk(it);o.push({t:ok?'정답!':(it.name?'정답: '+it.name:'정답 미등록'),c:ok?'#1a8f4a':'#c8312b',b:1,s:28,h:38})}}
           else{wrap(ctx,v,cw-pad*2).forEach(function(l){o.push({t:l})})}
-          CL[idx]=o;mx=Math.max(mx,pad*2+Math.max(mode==='guess'?1:2,o.length)*lh);
+          CL[idx]=o;mx=Math.max(mx,pad*2+Math.max(mode==='guess'?lh:2*lh,o.reduce(function(a,l){return a+(l.h||lh)},0)));
         }
       }
-      RH.push(both?ph+(ex?ex*lh+12:0):ph+16+mx);
+      RH.push(both?ph+(ex?pad*2+ex*lh:0):ph+mx);
     }
     var total=headH+RH.reduce(function(a,b){return a+b+gap+16},0)+m;
     c.width=W;c.height=Math.max(1920,total);ctx=c.getContext('2d');
@@ -328,21 +393,23 @@ button:active{transform:scale(.97)}
     var sl0=sl();ctx.font='700 44px '+font;var tw=ctx.measureText(sl0).width+64;
     ctx.fillStyle=T[2];ctx.beginPath();ctx.roundRect(W/2-tw/2,212,tw,72,36);ctx.fill();
     ctx.fillStyle='#fff';ctx.fillText(sl0,W/2,263);
-    function draw(img,x,y){ctx.fillStyle='#ffffff';ctx.beginPath();ctx.roundRect(x,y,cw,ph,22);ctx.fill();
-      if(img){ctx.save();ctx.beginPath();ctx.roundRect(x,y,cw,ph,22);ctx.clip();ctx.drawImage(img,x,y,cw,ph);ctx.restore()}ctx.strokeStyle=T[2];ctx.lineWidth=5;ctx.beginPath();ctx.roundRect(x,y,cw,ph,22);ctx.stroke()}
+    function draw(img,x,y,h,div){h=h||ph;ctx.fillStyle='#ffffff';ctx.beginPath();ctx.roundRect(x,y,cw,h,22);ctx.fill();
+      if(img){ctx.save();ctx.beginPath();ctx.roundRect(x,y,cw,h,22);ctx.clip();ctx.drawImage(img,x,y,cw,ph);ctx.restore()}
+      if(div){ctx.fillStyle=T[2];ctx.fillRect(x,y+ph-2,cw,4)}
+      ctx.strokeStyle=T[2];ctx.lineWidth=5;ctx.beginPath();ctx.roundRect(x,y,cw,h,22);ctx.stroke()}
     if(both){ctx.fillStyle=T[2];ctx.font='700 44px '+font;ctx.fillText('첫인상',m+cw+gap+cw/2,headH-34);ctx.fillText('현인상',m+2*(cw+gap)+cw/2,headH-34)}
     var y=headH;
     for(r=0;r<nrows;r++){
       for(k=0;k<cols;k++){
         var ix=r*cols+k;if(!rows[ix])continue;
         if(both){
-          for(var j=0;j<3;j++){var x0=m+j*(cw+gap);draw(imgs[ix][j],x0,y);
-            ctx.fillStyle='#2b2b3a';ctx.font='30px '+font;ctx.textAlign='center';
-            CL[ix][j].forEach(function(l,q){ctx.fillText(l,x0+cw/2,y+ph+34+q*lh)})}
+          for(var j=0;j<3;j++){var x0=m+j*(cw+gap);var cl=CL[ix][j];draw(imgs[ix][j],x0,y,cl.length?ph+pad*2+cl.length*lh:ph,cl.length>0);
+            if(cl.length){ctx.fillStyle='#2b2b3a';ctx.font='30px '+font;ctx.textAlign='left';
+              cl.forEach(function(l,q){ctx.fillText(l,x0+pad,y+ph+pad+28+q*lh)})}}
         }else{
-          var x=m+k*(cw+gap);draw(imgs[ix][0],x,y);
-          ctx.fillStyle='#fff';ctx.beginPath();ctx.roundRect(x,y+ph+16,cw,RH[r]-ph-16,22);ctx.fill();ctx.strokeStyle=T[2];ctx.lineWidth=5;ctx.stroke();ctx.textAlign=mode==='guess'?'center':'left';
-          CL[ix].forEach(function(l,q){ctx.fillStyle=l.c||'#111';ctx.font=(l.b?'bold ':'')+'30px '+font;ctx.fillText(l.t,mode==='guess'?x+cw/2:x+pad,y+ph+16+pad+28+q*lh)});
+          var x=m+k*(cw+gap);draw(imgs[ix][0],x,y,RH[r],true);
+          ctx.textAlign=mode==='guess'?'center':'left';
+          var ty=y+ph+pad;CL[ix].forEach(function(l){var h=l.h||lh;ctx.fillStyle=l.c||'#111';ctx.font=(l.b?'bold ':'')+(l.s||30)+'px '+font;ctx.fillText(l.t,mode==='guess'?x+cw/2:x+pad,ty+Math.round(h*0.74));ty+=h});
         }
       }
       y+=RH[r]+gap+16;
@@ -360,6 +427,7 @@ button:active{transform:scale(.97)}
   };
 
   $('rand').onclick=function(){roll();shown=false;st.textContent='';render();window.scrollTo(0,0)};
+  $('submitBtn').onclick=submitAll;
   $('allBtn').onclick=function(){sub=null;shown=false;st.textContent='';render()};
   window.addEventListener('hashchange',function(){shown=false;sub=null;st.textContent='';render()});
   owner=ADMIN;
